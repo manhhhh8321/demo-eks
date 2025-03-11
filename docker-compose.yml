@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  gateway:
+    build: ./gateway
+    container_name: nginx_gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - service1
+      - service2
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # RabbitMQ message broker port
+      - "15672:15672" # RabbitMQ management UI
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  service1:
+    build: ./service-1
+    container_name: service1
+    ports:
+      - "5001:5001"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy  # ✅ Wait for RabbitMQ to be ready
+    networks:
+      - app-network
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+
+  service2:
+    build: ./service-2
+    container_name: service2
+    ports:
+      - "5002:5002"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy  # ✅ Wait for RabbitMQ to be ready
+    networks:
+      - app-network
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+
+networks:
+  app-network:
+    driver: bridge

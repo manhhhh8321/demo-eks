@@ -1,0 +1,61 @@
+name: Deploy to AWS EKS
+
+on:
+  push:
+    branches:
+      - main  # Change to your main branch
+
+env:
+  AWS_REGION: ap-southeast-1  # Change to your AWS region
+  ECR_REPO_GATEWAY: 241533151130.dkr.ecr.ap-southeast-1.amazonaws.com/gateway
+  ECR_REPO_SERVICE1: 241533151130.dkr.ecr.ap-southeast-1.amazonaws.com/service-1
+  ECR_REPO_SERVICE2: 241533151130.dkr.ecr.ap-southeast-1.amazonaws.com/service-2
+  EKS_CLUSTER_NAME: casual-blues-gopher
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO_GATEWAY
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO_SERVICE1
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO_SERVICE2
+
+      - name: Build and push Gateway image
+        run: |
+          docker build -t gateway:latest ./gateway
+          docker tag gateway:latest $ECR_REPO_GATEWAY:latest
+          docker push $ECR_REPO_GATEWAY:latest
+
+      - name: Build and push Service 1 image
+        run: |
+          docker build -t service-1:latest ./service-1
+          docker tag service-1:latest $ECR_REPO_SERVICE1:latest
+          docker push $ECR_REPO_SERVICE1:latest
+
+      - name: Build and push Service 2 image
+        run: |
+          docker build -t service-2:latest ./service-2
+          docker tag service-2:latest $ECR_REPO_SERVICE2:latest
+          docker push $ECR_REPO_SERVICE2:latest
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+
+      - name: Deploy to EKS
+        run: kubectl apply -f k8s/
+
+      - name: Verify deployment
+        run: kubectl get pods -o wide
