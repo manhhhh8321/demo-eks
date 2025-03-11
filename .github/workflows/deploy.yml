@@ -3,7 +3,7 @@ name: Deploy to AWS EKS
 on:
   push:
     branches:
-      - main  # Change to your main branch
+      - master  # Change to your main branch
 
 env:
   AWS_REGION: ap-southeast-1  # Change to your AWS region
