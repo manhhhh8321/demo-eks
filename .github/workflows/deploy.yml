@@ -10,7 +10,7 @@ env:
   ECR_REPO_GATEWAY: 241533151130.dkr.ecr.ap-southeast-1.amazonaws.com/gateway
   ECR_REPO_SERVICE1: 241533151130.dkr.ecr.ap-southeast-1.amazonaws.com/service-1
   ECR_REPO_SERVICE2: 241533151130.dkr.ecr.ap-southeast-1.amazonaws.com/service-2
-  EKS_CLUSTER_NAME: casual-blues-gopher
+  EKS_CLUSTER_NAME: demo-eks
 
 jobs:
   deploy:
