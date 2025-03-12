@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: 241533151130.dkr.ecr.ap-southeast-1.amazonaws.com/gateway  # Use local image
+          image: 241533151130.dkr.ecr.ap-southeast-1.amazonaws.com/gateway:latest  # Use local image
           imagePullPolicy: IfNotPresent  # Don't pull from Docker Hub
           ports:
             - containerPort: 80
